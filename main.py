@@ -8,6 +8,12 @@ import sys
 from pathlib import Path
 import os
 
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 # Add src to path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -128,9 +134,9 @@ def evaluate_model(trainer, test_dataset, config: dict):
     
     accuracy = accuracy_score(true_labels, pred_labels)
     
-    print(f"Test Accuracy: {accuracy:.4f}")
-    print("\nClassification Report:")
-    print(classification_report(true_labels, pred_labels))
+    logger.info(f"Test Accuracy: {accuracy:.4f}")
+    logger.info("\nClassification Report:")
+    logger.info(classification_report(true_labels, pred_labels))
     
     return pred_labels, true_labels, accuracy
 
@@ -167,7 +173,7 @@ def create_visualizations(y_true: np.ndarray, y_pred: np.ndarray, accuracy: floa
     if config.get("output", {}).get("save_plots", True):
         output_dir = ensure_output_dir(get_output_dir(config, script_dir))
         save_plot(fig, output_dir / "bert_classification.png", dpi=300)
-        print(f"Plot saved to: {output_dir / 'bert_classification.png'}")
+        logger.info(f"Plot saved to: {output_dir / 'bert_classification.png'}")
     
     if config.get("plotting", {}).get("show_plot", True):
         plt.show()
@@ -184,7 +190,7 @@ def main():
     
     # Load data
     X, y = load_data(config)
-    print(f"Loaded {len(X)} samples with {len(X[0]) if len(X) > 0 else 0} features")
+    logger.info(f"Loaded {len(X)} samples with {len(X[0]) if len(X) > 0 else 0} features")
     
     # Perform time-aware splitting
     test_size = config["model"].get("test_size", 0.2)
@@ -201,9 +207,9 @@ def main():
     X_val, X_test = X_temp[: test_split_idx - val_split_idx], X_temp[test_split_idx - val_split_idx :]
     y_val, y_test = y_temp[: test_split_idx - val_split_idx], y_temp[test_split_idx - val_split_idx :]
     
-    print(f"\nTrain: {len(X_train)} samples")
-    print(f"Validation: {len(X_val)} samples")
-    print(f"Test: {len(X_test)} samples")
+    logger.info(f"\nTrain: {len(X_train)} samples")
+    logger.info(f"Validation: {len(X_val)} samples")
+    logger.info(f"Test: {len(X_test)} samples")
     
     # Create tokenizer and datasets
     tokenizer = AutoTokenizer.from_pretrained(
@@ -215,21 +221,21 @@ def main():
     test_dataset = create_dataset(X_test, y_test, tokenizer, config)
     
     # Create and train model
-    print("\nCreating BERT model...")
+    logger.info("\nCreating BERT model...")
     model = create_model(config)
     
-    print("Training model...")
+    logger.info("Training model...")
     trainer = train_model(model, train_dataset, val_dataset, config, script_dir)
     
     # Evaluate model
-    print("\nEvaluating model...")
+    logger.info("\nEvaluating model...")
     y_pred, y_true, accuracy = evaluate_model(trainer, test_dataset, config)
     
     # Create visualizations
-    print("\nCreating visualization...")
+    logger.info("\nCreating visualization...")
     create_visualizations(y_true, y_pred, accuracy, config, script_dir)
     
-    print("\n BERT time series classification complete")
+    logger.info("\n BERT time series classification complete")
 
 
 if __name__ == "__main__":
