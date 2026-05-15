@@ -4,7 +4,6 @@ BERT: Time Series Classification
 Using BERT for time series classification by tokenizing numerical sequences.
 """
 
-import sys
 from pathlib import Path
 import os
 
