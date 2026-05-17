@@ -148,54 +148,56 @@ def create_visualizations(
     plot: bool = False,
 ):
     """Generate clean visualizations."""
-    if plot:
-        fig, ax = plt.subplots(
-            figsize=config.get("plotting", {}).get("figure_size", [12, 6])
+    if not plot:
+        return
+
+    fig, ax = plt.subplots(
+        figsize=config.get("plotting", {}).get("figure_size", [12, 6])
+    )
+
+    colors_map = {
+        0: config.get("plotting", {})
+        .get("style", {})
+        .get("colors", {})
+        .get("primary", "k"),
+        1: config.get("plotting", {})
+        .get("style", {})
+        .get("colors", {})
+        .get("secondary", "r"),
+        2: config.get("plotting", {})
+        .get("style", {})
+        .get("colors", {})
+        .get("accent", "b"),
+    }
+
+    for i in range(len(y_true)):
+        color = colors_map.get(y_true[i], "k")
+        marker = "o" if y_true[i] == y_pred[i] else "x"
+        ax.scatter(
+            i,
+            y_true[i],
+            c=color,
+            s=config.get("plotting", {}).get("style", {}).get("markersize", 4) * 10,
+            alpha=config.get("plotting", {}).get("style", {}).get("alpha", 0.8),
+            marker=marker,
         )
 
-        colors_map = {
-            0: config.get("plotting", {})
-            .get("style", {})
-            .get("colors", {})
-            .get("primary", "k"),
-            1: config.get("plotting", {})
-            .get("style", {})
-            .get("colors", {})
-            .get("secondary", "r"),
-            2: config.get("plotting", {})
-            .get("style", {})
-            .get("colors", {})
-            .get("accent", "b"),
-        }
+    ax.set_xlabel("Sample")
+    ax.set_ylabel("Class")
+    ax.set_title(f"BERT Classification Results (Accuracy: {accuracy:.2%})")
+    ax.grid(True, alpha=0.3)
 
-        for i in range(len(y_true)):
-            color = colors_map.get(y_true[i], "k")
-            marker = "o" if y_true[i] == y_pred[i] else "x"
-            ax.scatter(
-                i,
-                y_true[i],
-                c=color,
-                s=config.get("plotting", {}).get("style", {}).get("markersize", 4) * 10,
-                alpha=config.get("plotting", {}).get("style", {}).get("alpha", 0.8),
-                marker=marker,
-            )
+    plt.tight_layout()
 
-        ax.set_xlabel("Sample")
-        ax.set_ylabel("Class")
-        ax.set_title(f"BERT Classification Results (Accuracy: {accuracy:.2%})")
-        ax.grid(True, alpha=0.3)
+    if config.get("output", {}).get("save_plots", True):
+        output_dir = ensure_output_dir(get_output_dir(config, script_dir))
+        save_plot(fig, output_dir / "bert_classification.png", dpi=300)
+        logger.info(f"Plot saved to: {output_dir / 'bert_classification.png'}")
 
-        plt.tight_layout()
-
-        if config.get("output", {}).get("save_plots", True):
-            output_dir = ensure_output_dir(get_output_dir(config, script_dir))
-            save_plot(fig, output_dir / "bert_classification.png", dpi=300)
-            logger.info(f"Plot saved to: {output_dir / 'bert_classification.png'}")
-
-        if config.get("plotting", {}).get("show_plot", True):
-            plt.show()
-        else:
-            plt.close(fig)
+    if config.get("plotting", {}).get("show_plot", True):
+        plt.show()
+    else:
+        plt.close(fig)
 
 
 def main():
